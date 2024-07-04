@@ -1,0 +1,39 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "master" branch
+  push:
+    branches: 
+      - '*'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+env:
+  DOCKER_ARGS:  '--rm  -v $(pwd):$(pwd) -w $(pwd)  -u $(id -u):$(id -g)'
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build-container:
+    # The type of runner that the job will run on
+    runs-on: self-hosted
+    permissions:
+      packages: write
+    outputs:
+      CONTAINER_TAG: ${{ steps.container-tag.outputs.tag }}
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v4
+
+      - name: container-tag
+        run : |
+          lowcase_repo=$(printf ${{github.repository}} | tr A-Z a-z)
+          echo CONTAINER_TAG=ghcr.io/${lowcase_repo}:${{github.ref_name}} | tee -a $GITHUB_ENV
+          echo tag=${CONTAINER_TAG} >> $GITHUB_OUTPUT
+      - run : env
+      - name: build-container
+        run : docker build -t ${{env.CONTAINER_TAG}} -f Dockerfile .
+      #- name: push-container
+      #  run : docker push ${{env.CONTAINER_TAG}}
