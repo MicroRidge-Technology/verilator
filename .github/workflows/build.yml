@@ -1,13 +1,14 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: build-container
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "master" branch
   push:
     branches: 
-      - '*'
+      - '**'
+    tags:
+      - '**'
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 env:
@@ -33,7 +34,13 @@ jobs:
           echo CONTAINER_TAG=ghcr.io/${lowcase_repo}:${{github.ref_name}} | tee -a $GITHUB_ENV
           echo tag=${CONTAINER_TAG} >> $GITHUB_OUTPUT
       - run : env
-      - name: build-container
-        run : docker build -t ${{env.CONTAINER_TAG}} -f Dockerfile .
+      - run : |
+          echo ${{github.ref}}
+          echo ${{github.ref_name}}
+          echo ${{github.ref_type}}
+          echo ${{github.repository}}
+          echo ${{github.repository_owner}}
+      #- name: build-container
+      #  run : docker build -t ${{env.CONTAINER_TAG}} -f Dockerfile .
       #- name: push-container
       #  run : docker push ${{env.CONTAINER_TAG}}
