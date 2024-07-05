@@ -21,8 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       packages: write
-    outputs:
-      CONTAINER_TAG: ${{ steps.container-tag.outputs.tag }}
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -32,7 +30,7 @@ jobs:
         run : |
           tagname=$(printf ${{github.ref_name}} | tr / :)
           lowcase_owner=$(printf ${{github.repository_owner}} | tr A-Z a-z)
-          echo CONTAINER_TAG=ghcr.io/${lowcase_owner}/${tagname} | tee -a $GITHUB_ENV
+          echo CONTAINER_TAG=ghcr.io/${lowcase_owner}/verilator:${tagname} | tee -a $GITHUB_ENV
       - run : env
       - run : |
           echo ${{github.ref}}
@@ -40,7 +38,10 @@ jobs:
           echo ${{github.ref_type}}
           echo ${{github.repository}}
           echo ${{github.repository_owner}}
+      - name: Log in to registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: build-container
         run : docker build -t ${{env.CONTAINER_TAG}} -f Dockerfile .
       - name: push-container
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         run : docker push ${{env.CONTAINER_TAG}}
